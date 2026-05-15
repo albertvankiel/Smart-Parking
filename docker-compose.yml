@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    volumes:
+      - ./:/var/www/html
+    depends_on:
+      - redis
+      - db
+  web:
+    image: nginx:alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./:/var/www/html
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - app
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: smart_parking
+    ports: 
+      - 3306:3306
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -proot | grep 'mysqld is alive' || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+  redis:
+    image: redis:alpine
+    ports:
+      - 6379:6379
+  redis-insight:
+    image: redis/redisinsight:latest
+    ports:
+      - 8001:5540
+    depends_on:
+      - redis
+  flyway:
+    image: flyway/flyway:latest
+    command: ["-url=jdbc:mysql://db:3306/smart_parking?allowPublicKeyRetrieval=true&useSSL=false", "-user=root", "-password=root", "migrate"]
+    volumes:
+      - ./database/migrations:/flyway/sql
+    depends_on:
+      db:
+        condition: service_healthy
+volumes:
+  db_data:

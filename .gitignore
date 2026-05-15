@@ -1,0 +1,14 @@
+vendor/
+composer.lock
+.env
+.env.local
+.idea/
+.vscode/
+*.swp
+.DS_Store
+db_data/
+redis_data/
+node_modules/
+dist/
+build/
+.npm/
