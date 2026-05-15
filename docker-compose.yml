@@ -7,6 +7,10 @@ services:
       dockerfile: ./Dockerfile
     volumes:
       - ./:/var/www/html
+    environment:
+      - XDEBUG_MODE=${XDEBUG_MODE:-off}
+      - JWT_SECRET=${JWT_SECRET}
+      - APP_URL=${APP_URL}
     depends_on:
       - redis
       - db
