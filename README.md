@@ -29,6 +29,11 @@ composer install
 ```
 This will also automatically create a .env file which contains a randomly generated secret token for JWT and set Xdebug to "off" by default.
 
+If you do not have PHP on your local machine you can run this part using Docker:
+```bash
+docker run --rm -v $(pwd):/app -w /app composer:2.7 sh -c "composer install && php bin/setup.php"
+```
+
 Build the frontend:
 ```bash
 cd frontend && npm install && npm run build
