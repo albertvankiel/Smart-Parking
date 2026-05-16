@@ -2,17 +2,25 @@
 
 require __DIR__ . './../vendor/autoload.php';
 
-use App\Infrastructure\Database\User\MySQLUserRepository;
-use App\Infrastructure\Database\User\RedisUserRepository;
-use App\Infrastructure\ServiceContainer;
-use App\Infrastructure\Router;
-use App\UI\Controllers\Auth\LoginController;
-use App\Domain\Repositories\UserRepositoryInterface;
-use App\UI\Controllers\HomeController;
-use App\UI\Controllers\ParkingSpot\ParkingSpotController;
+// Domain Layer (Interfaces & Models)
 use App\Domain\Repositories\ParkingSpotRepositoryInterface;
+use App\Domain\Repositories\ReservationRepositoryInterface;
+use App\Domain\Repositories\UserRepositoryInterface;
+
+// Infrastructure Layer (Database & Core Services)
 use App\Infrastructure\Database\ParkingSpot\MySQLParkingSpotRepository;
 use App\Infrastructure\Database\ParkingSpot\RedisParkingSpotRepository;
+use App\Infrastructure\Database\Reservation\MySQLReservationRepository;
+use App\Infrastructure\Database\User\MySQLUserRepository;
+use App\Infrastructure\Database\User\RedisUserRepository;
+use App\Infrastructure\Router;
+use App\Infrastructure\ServiceContainer;
+
+// UI Layer (Controllers)
+use App\UI\Controllers\Auth\LoginController;
+use App\UI\Controllers\HomeController;
+use App\UI\Controllers\ParkingSpot\ParkingSpotController;
+use App\UI\Controllers\Reservation\ReservationController;
 
 $serviceContainer = new ServiceContainer();
 
@@ -47,10 +55,16 @@ $serviceContainer->bind(ParkingSpotRepositoryInterface::class, function($service
     return new RedisParkingSpotRepository($mysqlRepository, $redis);
 });
 
+$serviceContainer->bind(ReservationRepositoryInterface::class, function($serviceContainer) {
+    $pdo = $serviceContainer->get(\PDO::class);
+    return new MySQLReservationRepository($pdo);
+});
+
 $router = $serviceContainer->get(Router::class);
 
 $router->add('/', 'GET', [HomeController::class, 'welcome']);
 $router->add('/login', 'POST', [LoginController::class, 'login']);
 $router->add('/spots', 'GET', [ParkingSpotController::class, 'index']);
+$router->add('/reservations', 'POST', [ReservationController::class, 'store']);
 
 $router->dispatch($_SERVER['REQUEST_URI']);
