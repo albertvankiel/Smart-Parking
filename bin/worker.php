@@ -76,5 +76,5 @@ while (true) {
         echo sprintf("[%s] Worker Error: %s\n", date('Y-m-d H:i:s'), $e->getMessage());
     }
 
-    sleep(5);
+    sleep(60);
 }
