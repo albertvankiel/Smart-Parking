@@ -34,7 +34,9 @@ class Router
         $method = $_SERVER['REQUEST_METHOD'];
 
         foreach ($this->routes as $route) {
-            if ($route['path'] === $path && $route['method'] === $method) {
+            $pattern = preg_replace('#\{[a-zA-Z0-9_]+\}#', '(\d+)', $route['path']);
+            $pattern = "#^" . $pattern . "$#";
+            if (preg_match($pattern, $path) && $route['method'] === $method) {
                 $controller = $this->serviceContainer->get($route['controller'][0]);
                 $controller->{$route['controller'][1]}();
                 return;

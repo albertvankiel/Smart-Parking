@@ -12,6 +12,12 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - APP_URL=${APP_URL}
       - WEBSOCKET_SERVER=${WEBSOCKET_SERVER}
+      - MYSQL_HOST=${MYSQL_HOST}
+      - MYSQL_DB=${MYSQL_DB}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
     depends_on:
       - redis
       - db
@@ -64,5 +70,21 @@ services:
     command: sh -c "npm install && npm start"
     ports:
       - "3000:3000"
+  worker:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    volumes:
+      - ./:/var/www/html
+    environment:
+      - WEBSOCKET_SERVER=${WEBSOCKET_SERVER}
+      - MYSQL_HOST=${MYSQL_HOST}
+      - MYSQL_DB=${MYSQL_DB}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+    command: php /var/www/html/bin/worker.php
+    depends_on:
+      db:
+        condition: service_healthy
 volumes:
   db_data:

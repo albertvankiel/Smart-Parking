@@ -5,6 +5,7 @@ namespace App\Infrastructure\Database\Reservation;
 use App\Domain\Repositories\ReservationRepositoryInterface;
 use App\Infrastructure\Database\AbstractDatabaseRepository;
 use App\Domain\Models\Reservation;
+use App\Domain\Enums\BookingStatus;
 
 readonly class MySQLReservationRepository extends AbstractDatabaseRepository implements ReservationRepositoryInterface
 {
@@ -66,7 +67,8 @@ readonly class MySQLReservationRepository extends AbstractDatabaseRepository imp
                 $userId,
                 $startTime,
                 $endTime,
-                $createdAt
+                $createdAt,
+                BookingStatus::BOOKED
             );
 
         } catch(\Exception $e) {
@@ -76,5 +78,48 @@ readonly class MySQLReservationRepository extends AbstractDatabaseRepository imp
 
             throw $e;
         }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function findByDate(string $date): array
+    {
+        $query = "
+            SELECT *
+            FROM reservations
+            WHERE DATE(start_time) = :date
+        ";
+
+        $stmnt = $this->pdo->prepare($query);
+        $stmnt->execute(['date' => $date]);
+
+        $rows = $stmnt->fetchAll(\PDO::FETCH_ASSOC);
+        $reservations = [];
+
+        foreach ($rows as $row) {
+            $reservations[] = new Reservation(
+                (int) $row['id'],
+                (int) $row['parking_spot_id'],
+                (int) $row['user_id'],
+                $row['start_time'],
+                $row['end_time'],
+                $row['created_at'],
+                BookingStatus::BOOKED
+            );
+        }
+
+        return $reservations;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function complete(int $id): bool
+    {
+        $query = "UPDATE reservations SET status = 'completed' WHERE id = :id";
+        $stmnt = $this->pdo->prepare($query);
+
+        return $stmnt->execute(['id' => $id]);
     }
 }

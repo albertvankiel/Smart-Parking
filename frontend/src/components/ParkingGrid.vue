@@ -50,6 +50,7 @@ const isBooking = ref(false);
 const error = ref(null);
 const selectedDate = ref(document.getElementById('date-select')?.value || '');
 
+const wsUrl = import.meta.env.VITE_WEBSOCKET_URL || 'http://localhost:3000';
 let socket = null;
 
 const timeSlots = [
@@ -138,19 +139,53 @@ const bookSpot = async (spotId, timeSlot) => {
 
 const handleDateChange = (event) => {
 	selectedDate.value = event.detail;
-	reservations.value = [];
+	fetchReservations();
+}
+
+const fetchReservations = async() => {
+	if (!selectedDate.value) {
+		return;
+	}
+
+	try {
+		const token = AuthService.getToken();
+		const response = await fetch(`/api/reservations?date=${selectedDate.value}`, {
+			method: 'GET',
+			headers: {
+				'Authorization': `Bearer ${token}`
+			}
+		});
+		const data = await response.json();
+
+		if (response.ok) {
+			reservations.value = data.data;
+		} else {
+			console.error("Failed to load reservations:", data.error);
+		}
+	} catch (err) {
+		console.error("Network error fetching reservations");
+	}
 }
 
 onMounted(() => {
 	fetchSpots();
+	fetchReservations();
 	window.addEventListener('parking-date-change', handleDateChange);
 
-	socket = io('http://localhost:3000');
+	socket = io(wsUrl);
 
 	socket.on('spot_booked', (newReservation) => {
 		console.log('Receieved real time booking:', newReservation);
 
-		reservations.value.push(newReservation);
+		if (newReservation.start_time.startsWith(selectedDate.value)) {
+			reservations.value.push(newReservation);
+		}
+	});
+
+	socket.on('spot_released', (data) => {
+		console.log('Received real time release for spot:', data.spot_id);
+		
+		reservations.value = reservations.value.filter(res => res.parking_spot_id !== data.spot_id);
 	});
 });
 

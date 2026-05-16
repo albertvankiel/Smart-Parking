@@ -3,40 +3,28 @@
 namespace App\UI\Controllers\Reservation;
 
 use App\Domain\Repositories\ReservationRepositoryInterface;
-use Firebase\JWT\JWT;
-use Firebase\JWT\Key;
-use Exception;
+use App\UI\Traits\RequireAuth;
 
 readonly class ReservationController
 {
+    use RequireAuth;
+
+    private int $userId;
+
     public function __construct(
         private ReservationRepositoryInterface $reservationRepository
     ) {
+        try {
+            $this->userId = $this->authenticate();
+        } catch(\Exception $e) {
+            http_response_code($e->getCode());
+            echo json_encode(['error' => $e->getMessage()]);
+            return;
+        }
     }
 
     public function store(): void
     {
-        $headers = getallheaders();
-        $authHeader = $headers['Authorization'] ?? '';
-
-        if (!preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
-            http_response_code(401);
-            echo json_encode(['error' => 'Unauthorized. Missing or invalid token']);
-            return;
-        }
-
-        $jwt = $matches[1];
-        $secretKey = getenv('JWT_SECRET');
-
-        try {
-            $decoded = JWT::decode($jwt, new Key($secretKey, 'HS256'));
-            $userId = (int) $decoded->sub;
-        } catch (Exception $e) {
-            http_response_code(400);
-            echo json_encode(['error' => 'Unauthorized. Invalid token.']);
-            return;
-        }
-
         $json = file_get_contents('php://input');
         $data = json_decode($json, true);
 
@@ -51,7 +39,7 @@ readonly class ReservationController
         }
 
         try {
-            $reservation = $this->reservationRepository->bookSpot($userId, $spotId, $startTime, $endTime);
+            $reservation = $this->reservationRepository->bookSpot($this->userId, $spotId, $startTime, $endTime);
 
             $webSocketServer = getenv('WEBSOCKET_SERVER');
 
@@ -75,7 +63,7 @@ readonly class ReservationController
                 'status' => 'success',
                 'data' => $reservation
             ]);
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             http_response_code(409);
             header('Content-Type: application/json');
             echo json_encode([
@@ -83,6 +71,52 @@ readonly class ReservationController
                 'message' => $e->getMessage() 
             ]);
         }
+    }
 
+    public function index(): void
+    {
+        $date = $_GET['date'] ?? date('Y-m-d');
+
+        try {
+            $reservations = $this->reservationRepository->findByDate($date);
+
+            http_response_code(200);
+            header('Content-Type: application/json');
+            echo json_encode([
+                'status' => 'success',
+                'data' => $reservations
+            ]);
+        } catch (\Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => $e->getMessage()]);
+        }
+    }
+
+    public function complete(): void 
+    {
+        $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+        if (!preg_match('#^/api/reservations/(\d+)/complete$#', $path, $matches)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Invalid reservation ID']);
+            return;
+        }
+
+        $reservationId = (int) $matches[1];
+
+        try {
+            $success = $this->reservationRepository->complete($reservationId);
+            if ($success) {
+                http_response_code(200);
+                echo json_encode([
+                    'status' => 'success',
+                    'message' => 'Reservation completed'
+                ]);
+            }
+        } catch(\Exception $e) {
+            http_response_code(500);
+            echo json_encode([
+                'error' => 'Failed to complete reservation'
+            ]);
+        }
     }
 }

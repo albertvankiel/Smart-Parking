@@ -29,12 +29,19 @@ $serviceContainer->bind(ServiceContainer::class, function() use ($serviceContain
 });
 
 $serviceContainer->bind(\PDO::class, function() {
-    return new \PDO('mysql:host=db;dbname=smart_parking', 'root', 'root');
+    $host = getenv('MYSQL_HOST');
+    $db = getenv('MYSQL_DB');
+    $user = getenv('MYSQL_USER');
+    $pw = getenv('MYSQL_PASSWORD');
+    return new \PDO("mysql:host={$host};dbname={$db}", $user, $pw);
 });
 
 $serviceContainer->bind(\Redis::class, function() {
+    $redisHost = getenv('REDIS_HOST');
+    $redisPort = getenv('REDIS_PORT');
+
     $redis = new \Redis();
-    $redis->connect('redis', 6379);
+    $redis->connect($redisHost, $redisPort);
 
     return $redis;
 });
@@ -66,5 +73,7 @@ $router->add('/api/', 'GET', [HomeController::class, 'welcome']);
 $router->add('/api/login', 'POST', [LoginController::class, 'login']);
 $router->add('/api/spots', 'GET', [ParkingSpotController::class, 'index']);
 $router->add('/api/reservations', 'POST', [ReservationController::class, 'store']);
+$router->add('/api/reservations', 'GET', [ReservationController::class, 'index']);
+$router->add('/api/reservations/{id}/complete', 'PUT', [ReservationController::class, 'complete']);
 
-$router->dispatch($_SERVER['REQUEST_URI']);
+$router->dispatch(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));

@@ -2,6 +2,8 @@
 
 namespace App\Domain\Models;
 
+use App\Domain\Enums\BookingStatus;
+
 readonly class Reservation implements \JsonSerializable
 {
     public function __construct(
@@ -10,7 +12,8 @@ readonly class Reservation implements \JsonSerializable
         public int $userId,
         public string $startTime,
         public string $endTime,
-        public string $createdAt
+        public string $createdAt,
+        public BookingStatus $bookingStatus = BookingStatus::BOOKED,
     ) {
     }
 
@@ -22,6 +25,7 @@ readonly class Reservation implements \JsonSerializable
             'user_id' => $this->userId,
             'start_time' => $this->startTime,
             'end_time' => $this->endTime,
+            'status' => $this->bookingStatus->value,
             'created_at' => $this->createdAt
         ];
     }

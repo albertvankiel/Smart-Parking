@@ -13,4 +13,20 @@ interface ReservationRepositoryInterface
      * @throws \Exception If the spot is already booked or does not exist.
      */
     public function bookSpot(int $userId, int $parkingSpotId, string $startTime, string $endTime): Reservation;
+
+    /**
+     * Find all reservatiosn for a specific date.
+     * 
+     * @param string $date The date in YYYY-MM-DD format
+     * @return Reservation[]
+     */
+    public function findByDate(string $date): array;
+
+    /**
+     * Mark reservation as complete.
+     * 
+     * @param int $id ID of the reservation.
+     * @return bool True if successful.
+     */
+    public function complete(int $id): bool;
 }
