@@ -26,7 +26,7 @@ readonly class ReservationController
         }
 
         $jwt = $matches[1];
-        $secretKey = getEnv('JWT_SECRET');
+        $secretKey = getenv('JWT_SECRET');
 
         try {
             $decoded = JWT::decode($jwt, new Key($secretKey, 'HS256'));
@@ -52,6 +52,22 @@ readonly class ReservationController
 
         try {
             $reservation = $this->reservationRepository->bookSpot($userId, $spotId, $startTime, $endTime);
+
+            $webSocketServer = getenv('WEBSOCKET_SERVER');
+
+            $options = [
+                'http' => [
+                    'header' => "Content-Type: application/json\r\n",
+                    'method' => 'POST',
+                    'content' => json_encode(['reservation' => $reservation]),
+                    'timeout' => 1
+                ]
+            ];
+
+            $context = stream_context_create($options);
+
+            // Use @ to suppress warnings if the websockets server is offline
+            @file_get_contents($webSocketServer, false, $context);
 
             http_response_code(201);
             header('Content-Type: application/json');

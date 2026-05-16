@@ -11,6 +11,7 @@ services:
       - XDEBUG_MODE=${XDEBUG_MODE:-off}
       - JWT_SECRET=${JWT_SECRET}
       - APP_URL=${APP_URL}
+      - WEBSOCKET_SERVER=${WEBSOCKET_SERVER}
     depends_on:
       - redis
       - db
@@ -55,5 +56,13 @@ services:
     depends_on:
       db:
         condition: service_healthy
+  ws:
+    image: node:22-alpine
+    working_dir: /app
+    volumes:
+      - ./websocket-server:/app
+    command: sh -c "npm install && npm start"
+    ports:
+      - "3000:3000"
 volumes:
   db_data:

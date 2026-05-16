@@ -62,8 +62,8 @@ readonly class MySQLReservationRepository extends AbstractDatabaseRepository imp
 
             return new Reservation(
                 $reservationId,
-                $userId,
                 $parkingSpotId,
+                $userId,
                 $startTime,
                 $endTime,
                 $createdAt

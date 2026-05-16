@@ -62,9 +62,9 @@ $serviceContainer->bind(ReservationRepositoryInterface::class, function($service
 
 $router = $serviceContainer->get(Router::class);
 
-$router->add('/', 'GET', [HomeController::class, 'welcome']);
-$router->add('/login', 'POST', [LoginController::class, 'login']);
-$router->add('/spots', 'GET', [ParkingSpotController::class, 'index']);
-$router->add('/reservations', 'POST', [ReservationController::class, 'store']);
+$router->add('/api/', 'GET', [HomeController::class, 'welcome']);
+$router->add('/api/login', 'POST', [LoginController::class, 'login']);
+$router->add('/api/spots', 'GET', [ParkingSpotController::class, 'index']);
+$router->add('/api/reservations', 'POST', [ReservationController::class, 'store']);
 
 $router->dispatch($_SERVER['REQUEST_URI']);
