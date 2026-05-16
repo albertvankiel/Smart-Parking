@@ -1,6 +1,6 @@
 <?php
 
-namespace App\UI\Controllers;
+namespace App\UI\Controllers\Auth;
 
 use Firebase\JWT\JWT;
 use App\Domain\Repositories\UserRepositoryInterface;
@@ -25,7 +25,7 @@ readonly class LoginController
         // Use a dummy hash if the user doesn't exist to prevent timing attacks
         $hashToVerify = $user ? $user->password : '$2y$10$abcdefghijklmnopqrstuv';
 
-        $passwordMatches = password_verify($password, $user->password);
+        $passwordMatches = password_verify($password, $hashToVerify);
 
         if ($user && $passwordMatches) {
             $payload = [

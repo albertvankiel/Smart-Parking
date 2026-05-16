@@ -1,9 +1,10 @@
 <?php
 
-namespace App\Domain\Database;
+namespace App\Infrastructure\Database\User;
 
 use App\Domain\Models\User;
 use App\Domain\Repositories\UserRepositoryInterface;
+use App\Infrastructure\Database\AbstractDatabaseRepository;
 
 readonly class MySQLUserRepository extends AbstractDatabaseRepository implements UserRepositoryInterface
 {

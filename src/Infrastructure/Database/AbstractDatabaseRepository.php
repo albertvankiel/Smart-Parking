@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domain\Database;
+namespace App\Infrastructure\Database;
 
 readonly abstract class AbstractDatabaseRepository
 {
