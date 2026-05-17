@@ -2,7 +2,7 @@
 
 namespace App\Domain\Enums;
 
-enum BookingStatus: string 
+enum BookingStatus: string
 {
     case BOOKED = 'booked';
     case COMPLETED = 'completed';

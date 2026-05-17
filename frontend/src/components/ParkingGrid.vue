@@ -26,11 +26,11 @@
 						v-for="timeSlot in timeSlots"
 						:key="timeSlot.id"
 						:class="['time-slot-btn', isBooked(spot.id, timeSlot) ? 'booked' : 'available']"
-						:disabled="isBooked(spot.id, timeSlot)"
-						@click="bookSpot(spot.id, timeSlot)"
+						:disabled="isBookedByOther(spot.id, timeSlot) || isBooking"
+						@click="handleSlotClick(spot.id, timeSlot)"
 					>
 						<span class="status-dot"></span>
-						{{ timeSlot.label }}
+						{{ isBookedByMe(spot.id, timeSlot) ? 'Release' : timeSlot.label }}
 					</button>
 				</div>
 			</div>
@@ -86,12 +86,79 @@ const fetchSpots = async() => {
 	}
 };
 
+const getReservation = (spotId, timeSlot) => {
+	const startDateTime = `${selectedDate.value} ${timeSlot.startTime}`;
+	return reservations.value.find(res => 
+		res.parking_spot_id === spotId &&
+		res.start_time === startDateTime &&
+		res.status === 'booked'
+	);
+};
+
+const isBookedByMe = (spotId, timeSlot) => {
+	const reservation = getReservation(spotId, timeSlot);
+	if (!reservation) {
+		return false;
+	}
+	const token = AuthService.getToken();
+	if (!token) {
+		return false;
+	}
+	try {
+		const payload = JSON.parse(atob(token.split('.')[1]));
+		return reservation.user_id === payload.sub;
+	} catch (e) {
+		return false;
+	}
+};
+
+const isBookedByOther = (spotId, timeSlot) => {
+	return isBooked(spotId, timeSlot) && !isBookedByMe(spotId, timeSlot);
+};
+
+const releaseSpot = async (reservationId) => {
+	isBooking.value = true;
+	try {
+		const token = AuthService.getToken();
+		const response = await fetch(`/api/reservations/${reservationId}/complete`, {
+			method: 'PUT',
+			headers: {
+				'Authorization': `Bearer ${token}`
+			}
+		});
+		const data = await response.json();
+		if (response.ok) {
+			// Remove the reservation from the local array so the UI updates instantly
+			reservations.value = reservations.value.filter(res => res.id !== reservationId);
+			alert("Spot released successfully!");
+		} else {
+			alert(`Could not release spot: ${data.message || data.error}`);
+		}
+	} catch(err) {
+		alert("Network error occurred");
+	} finally {
+		isBooking.value = false;
+	}
+};
+
+const handleSlotClick = (spotId, timeSlot) => {
+	if (isBookedByMe(spotId, timeSlot)) {
+		const reservation = getReservation(spotId, timeSlot);
+		if (reservation) {
+			releaseSpot(reservation.id);
+		}
+	} else {
+		bookSpot(spotId, timeSlot);
+	}
+};
+
 const isBooked = (spotId, timeSlot) => {
 	const startDateTime = `${selectedDate.value} ${timeSlot.startTime}`;
 
 	return reservations.value.some(res => 
 		res.parking_spot_id === spotId &&
-		res.start_time === startDateTime
+		res.start_time === startDateTime && 
+		res.status === 'booked'
 	);
 };
 
@@ -123,7 +190,6 @@ const bookSpot = async (spotId, timeSlot) => {
 		const data = await response.json();
 
 		if (response.ok) {
-			reservations.value.push(data.data);
 			alert("Spot booked successfully!");
 		} else {
 			// Catch 409 from pessimistic lock
@@ -183,9 +249,9 @@ onMounted(() => {
 	});
 
 	socket.on('spot_released', (data) => {
-		console.log('Received real time release for spot:', data.spot_id);
+		console.log('Received real time release for reservation:', data.reservation_id);
 		
-		reservations.value = reservations.value.filter(res => res.parking_spot_id !== data.spot_id);
+		reservations.value = reservations.value.filter(res => res.id !== data.reservation_id);
 	});
 });
 
@@ -239,10 +305,27 @@ onUnmounted(() => {
 .time-slot-btn.booked {
     background-color: #f3f4f6;
     color: #9ca3af;
-    cursor: not-allowed;
     opacity: 0.8;
 }
+
+.time-slot-btn.booked:disabled {
+    cursor: not-allowed;
+}
+
+.time-slot-btn.booked:not(:disabled) {
+    background-color: #fee2e2;
+    color: #b91c1c;
+    border-color: #fca5a5;
+    cursor: pointer;
+    opacity: 1;
+}
+.time-slot-btn.booked:not(:disabled):hover {
+    background-color: #fecaca;
+}
 .time-slot-btn.booked .status-dot {
-    background-color: #ef4444; /* Red */
+    background-color: #ef4444;
+}
+.time-slot-btn.booked .status-dot {
+    background-color: #ef4444;
 }
 </style>

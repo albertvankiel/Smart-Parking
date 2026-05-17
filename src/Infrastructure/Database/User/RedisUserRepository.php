@@ -30,7 +30,7 @@ readonly class RedisUserRepository implements UserRepositoryInterface
             $this->redis->set($cacheKey, json_encode([
                 'id'       => $user->id,
                 'email'    => $user->email,
-                'password' => $user->password 
+                'password' => $user->password
             ]), 3600);
         }
 

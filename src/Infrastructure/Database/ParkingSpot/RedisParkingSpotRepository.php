@@ -26,9 +26,9 @@ readonly class RedisParkingSpotRepository implements ParkingSpotRepositoryInterf
             foreach ($cachedParkingSpots as $parkingSpot) {
                 $parkingSpot = json_decode($parkingSpot, true);
                 $spots[] = new ParkingSpot(
-                    $parkingSpot['id'], 
-                    $parkingSpot['spotNumber'], 
-                    $parkingSpot['floorNumber'], 
+                    $parkingSpot['id'],
+                    $parkingSpot['spotNumber'],
+                    $parkingSpot['floorNumber'],
                     SpotType::from($parkingSpot['spotType'])
                 );
             }

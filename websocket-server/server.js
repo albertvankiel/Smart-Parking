@@ -40,6 +40,19 @@ app.post('/broadcast/booking', (req, res) => {
 	res.status(200).json({success: true});
 });
 
+app.post('/broadcast/release', (req, res) => {
+	const {reservation_id} = req.body;
+
+	if (!reservation_id) {
+		return res.status(400).json({ error: "Missing reservation id data" });
+	};
+
+	console.log("Released reservation: ", reservation_id);
+
+	io.emit('spot_released', { reservation_id });
+	res.status(200).json({success:true});
+});
+
 const PORT = 3000;
 server.listen(PORT, () => {
 	console.log(`Websocket server running on port ${PORT}`);

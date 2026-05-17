@@ -14,13 +14,7 @@ readonly class ReservationController
     public function __construct(
         private ReservationRepositoryInterface $reservationRepository
     ) {
-        try {
-            $this->userId = $this->authenticate();
-        } catch(\Exception $e) {
-            http_response_code($e->getCode());
-            echo json_encode(['error' => $e->getMessage()]);
-            return;
-        }
+        $this->userId = $this->authenticate();
     }
 
     public function store(): void
@@ -68,7 +62,7 @@ readonly class ReservationController
             header('Content-Type: application/json');
             echo json_encode([
                 'status' => 'error',
-                'message' => $e->getMessage() 
+                'message' => $e->getMessage()
             ]);
         }
     }
@@ -92,7 +86,7 @@ readonly class ReservationController
         }
     }
 
-    public function complete(): void 
+    public function complete(): void
     {
         $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
         if (!preg_match('#^/api/reservations/(\d+)/complete$#', $path, $matches)) {
@@ -106,13 +100,36 @@ readonly class ReservationController
         try {
             $success = $this->reservationRepository->complete($reservationId);
             if ($success) {
+                // 1. Send WebSocket Broadcast
+                $webSocketServer = getenv('WEBSOCKET_SERVER');
+                if ($webSocketServer) {
+                    // Change /booking to /release for the URL
+                    $releaseUrl = str_replace('/booking', '/release', $webSocketServer);
+
+                    $options = [
+                        'http' => [
+                            'header' => "Content-Type: application/json\r\n",
+                            'method' => 'POST',
+                            'content' => json_encode(['reservation_id' => $reservationId]),
+                            'timeout' => 1
+                        ]
+                    ];
+                    @file_get_contents($releaseUrl, false, stream_context_create($options));
+                }
+                // 2. Return Success to Vue
                 http_response_code(200);
                 echo json_encode([
                     'status' => 'success',
                     'message' => 'Reservation completed'
                 ]);
+            } else {
+                // Return 404 if rowCount() was 0
+                http_response_code(404);
+                echo json_encode([
+                    'error' => 'Reservation not found or already completed'
+                ]);
             }
-        } catch(\Exception $e) {
+        } catch (\Exception $e) {
             http_response_code(500);
             echo json_encode([
                 'error' => 'Failed to complete reservation'

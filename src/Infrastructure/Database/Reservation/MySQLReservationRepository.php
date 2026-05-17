@@ -22,8 +22,9 @@ readonly class MySQLReservationRepository extends AbstractDatabaseRepository imp
                 FROM reservations
                 WHERE parking_spot_id = :parking_spot_id
                     AND  (
-                        (start_time <= :end_time AND end_time >= :start_time)
+                        (start_time < :end_time AND end_time > :start_time)
                     )
+                    AND status = 'booked'
                 FOR UPDATE
             ";
 
@@ -49,7 +50,7 @@ readonly class MySQLReservationRepository extends AbstractDatabaseRepository imp
                 'user_id' => $userId,
                 'parking_spot_id' => $parkingSpotId,
                 'start_time' => $startTime,
-                'end_time' => $endTime 
+                'end_time' => $endTime
             ]);
 
             $reservationId = (int) $this->pdo->lastInsertId();
@@ -70,8 +71,7 @@ readonly class MySQLReservationRepository extends AbstractDatabaseRepository imp
                 $createdAt,
                 BookingStatus::BOOKED
             );
-
-        } catch(\Exception $e) {
+        } catch (\Exception $e) {
             if ($this->pdo->inTransaction()) {
                 $this->pdo->rollBack();
             }
@@ -105,7 +105,7 @@ readonly class MySQLReservationRepository extends AbstractDatabaseRepository imp
                 $row['start_time'],
                 $row['end_time'],
                 $row['created_at'],
-                BookingStatus::BOOKED
+                BookingStatus::from($row['status'])
             );
         }
 
@@ -119,7 +119,8 @@ readonly class MySQLReservationRepository extends AbstractDatabaseRepository imp
     {
         $query = "UPDATE reservations SET status = 'completed' WHERE id = :id";
         $stmnt = $this->pdo->prepare($query);
+        $stmnt->execute(['id' => $id]);
 
-        return $stmnt->execute(['id' => $id]);
+        return $stmnt->rowCount() > 0;
     }
 }

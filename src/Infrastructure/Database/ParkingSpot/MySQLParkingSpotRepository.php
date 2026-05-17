@@ -20,9 +20,9 @@ readonly class MySQLParkingSpotRepository extends AbstractDatabaseRepository imp
 
         foreach ($rows as $row) {
             $data[] = new ParkingSpot(
-                $row['id'], 
-                $row['spot_number'], 
-                $row['floor_number'], 
+                $row['id'],
+                $row['spot_number'],
+                $row['floor_number'],
                 SpotType::from($row['spot_type'])
             );
         }

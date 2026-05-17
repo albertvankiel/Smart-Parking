@@ -18,7 +18,7 @@ readonly class ParkingSpotController
     {
         try {
             $this->authenticate();
-        } catch(\Exception $e) {
+        } catch (\Exception $e) {
             http_response_code($e->getCode());
             echo json_encode(['error' => $e->getMessage()]);
             return;

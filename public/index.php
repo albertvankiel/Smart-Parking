@@ -76,4 +76,19 @@ $router->add('/api/reservations', 'POST', [ReservationController::class, 'store'
 $router->add('/api/reservations', 'GET', [ReservationController::class, 'index']);
 $router->add('/api/reservations/{id}/complete', 'PUT', [ReservationController::class, 'complete']);
 
-$router->dispatch(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
+$path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+try {
+    $router->dispatch($path);
+} catch (\Throwable $e) {
+    $code = $e->getCode();
+    if ($code < 100 || $code >= 600) {
+        $code = 500;
+    }
+    http_response_code($code);
+    header('Content-Type: application/json');
+    
+    echo json_encode([
+        'status' => 'error',
+        'message' => $e->getMessage()
+    ]);
+}

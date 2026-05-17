@@ -10,7 +10,7 @@ trait RequireAuth
 {
     /**
      * Validates JWT token from authorization header.
-     * 
+     *
      * @return int User ID if authenticated.
      * @throws Exception If token is invalid or missing.
      */

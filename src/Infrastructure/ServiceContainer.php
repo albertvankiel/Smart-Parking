@@ -21,7 +21,7 @@ class ServiceContainer
 
     /**
      * Resolves a class and injects its dependencies using Reflection.
-     * 
+     *
      * @template T
      * @param class-string<T> $class
      * @return T|object|null
