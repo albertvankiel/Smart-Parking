@@ -87,17 +87,3 @@ To verify the quality of the code, use PHPStan and PHPCS:
 php ./vendor/bin/phpstan analyse ./src
 php ./vendor/bin/phpcs ./src
 ```
-
-## Retrospective
-
-| Component | Planned | Actual | Notes / Adjustments |
-| :--- | :--- | :--- | :--- |
-| **Preplanning** | 4.0 hr | 4.0 hrs | Preplanning and deciding on the architecture. Eventually settled for domain driven design and dependency injection. |
-| **Infrastructure & DB Schema** | 2.0 hr | 2.5 hrs |  |
-| **Auth & API Foundation** | 2.5 hrs | 4.0 hrs | Took extra time restructuring the authentication to avoid repeating code |
-| **Domain Logic & Concurrency** | 2.0 hrs | 2.5 hrs |  |
-| **Frontend Integration (Vue)** | 2.5 hrs | 6.5 hrs | Had to pivot to different structure somewhat into development due to switching to Vue. Took extra time reworking the code to support releasing a parking slot. |
-| **Real-Time WebSockets** | 1.0 hr | 2.0 hr |  |
-| **Background Worker** | 1.5 hrs | 2 hrs |  |
-| **Finishing up and code cleanup** | 1.0 hrs | 1.0 hrs |  |
-| **Total** | **16.5 hrs** | **24.5 hrs** | |
